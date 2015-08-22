@@ -261,7 +261,7 @@ namespace PS3API_Demo
             PS3_REMOTE.SetMemory(0x71d0e0, buffer);
         }
 
-        private void swap_sv_me_m()
+        private void swap_sv_me_m(bool enable)
         {
 
             byte[] swap = new byte[52]
@@ -272,7 +272,23 @@ namespace PS3API_Demo
                 0x63, 0x07, 0xB4, 0x4E, 0x80, 0x00, 0x20
             };
 
-            PS3_REMOTE.SetMemory(0x22f7a8+4, swap);
+            byte[] origin = new byte[59]
+            {
+                0x7C,0x08,0x02,0xA6,0xF8,0x01, 0x00,0xB0, 0xFB, 0xE1, 0x00, 0x98, 0xFB, 0xC1, 0x00, 0x90,
+                0xFB, 0xA1, 0x00, 0x88, 0xFB, 0x81,
+                0x00, 0x80, 0xFB, 0x61, 0x00, 0x78, 0x4B, 0xEB, 0xCF, 0x05, 0x2C, 0x03, 0x00, 0x00, 0x41,
+                0x82, 0x01, 0x0C, 0x4B, 0xEB, 0xCF, 0x65, 0x2C, 0x03, 0x00, 0x00, 0x41, 0x82, 0x01, 0x00,
+                0x3C, 0x60, 0x01, 0x7C, 0x3B, 0xA0, 0x00
+            };
+
+            if (enable)
+            {
+                PS3_REMOTE.SetMemory(0x22f7a8 + 4, swap);
+            }
+            else
+            {
+                PS3_REMOTE.SetMemory(0x22f7a8 + 4, origin);
+            }
 
             /*byte[] dmp = PS3_REMOTE.GetBytes(0x22f7a8, 1024); //sv_matchend
             _debug.WriteLine(BitConverter.ToString(dmp));
@@ -282,10 +298,10 @@ namespace PS3API_Demo
             _debug.WriteLine(BitConverter.ToString(dmp));*/
         }
 
-        private uint NbClientTeam(int team)
+        private int NbClientTeam(int team)
         {
-            uint i = 0, nbclientonteam = 0;
-            if (team != 0x2 || team != 0x1) return 0;
+            int i = 0, nbclientonteam = 0;
+            if (team != 1 && team != 0) return 0;
 
             for (i = 0; i < maxSlots; i++)
             {
@@ -297,9 +313,10 @@ namespace PS3API_Demo
 
         private bool setClientTeam(int pID, int n_team)
         {
-            if (n_team != 0 || n_team != 1) return false;
+            if (n_team != 0 && n_team != 1) return false;
+            if (c_board[pID] == null) return false;
             byte conv_team = 0x0;
-            int new_comrad = 0, nb_client_nteam = (int)NbClientTeam(n_team), i = 0, j = 0;
+            int new_comrad = 0, nb_client_nteam = NbClientTeam(n_team), i = 0, j = 0;
             Random rnd = new Random();
 
             /* Don't move anyone if the target team if already full */
@@ -363,17 +380,17 @@ namespace PS3API_Demo
 
         private bool AutoBalancing()
         {
-            int count_team0 = (int)NbClientTeam(0), count_team1 = (int)NbClientTeam(1);
+            int count_team0 = NbClientTeam(0), count_team1 = NbClientTeam(1);
             if (count_team0 == count_team1) return false;
             long difference =  Math.Abs(count_team0 - count_team1);
             int team_target = 0;
             int client_target = 0, i = 0, j = 0;
             Random rnd = new Random();
 
-            if (difference > _MAX_TEAM_DIFF)
+            if (difference >= _MAX_TEAM_DIFF)
             {
                 PS3_REMOTE.CCAPI.Notify(CCAPI.NotifyIcon.CAUTION, "Auto-balancing running..");
-                MW3_REMOTE.iPrintln(-1, "^3Auto-balancing: Due to ^5team ^7ragequit.");
+                MW3_REMOTE.iPrintln(-1, "^3Auto-balancing: Due to ^5stupid(s) ^7ragequit.");
 
                 /* Define what team we need to fill in */
                 if (count_team0 > count_team1)
@@ -405,8 +422,6 @@ namespace PS3API_Demo
                         {
                             setClientTeam(client_target, team_target);
                         }
-
-                        
 
                     }
                     else
@@ -447,7 +462,7 @@ namespace PS3API_Demo
             _debug = new System.IO.StreamWriter("MW3Guard-" + DateTime.Now.ToString("MM-dd-yyyy-h-mm") + ".log");
             
             /* Corrupt sv_matchend: face the buffer overflow with magic paquet */
-            swap_sv_me_m();
+            swap_sv_me_m(true);
 
             while (!thread_stop)
             {
@@ -695,6 +710,7 @@ namespace PS3API_Demo
                                     __voteReason = -1;
                                 }
                             }
+                            
 
                             nbClient_T++;
                             c_board[i].cl_inter++;
@@ -774,7 +790,10 @@ namespace PS3API_Demo
                     }
 
                     /* Auto-balancing in case of major ragequit.. */
-                    AutoBalancing();
+                    //AutoBalancing();
+
+                    if (isGameFinished()) swap_sv_me_m(false);
+
                 }
                 else
                 {
@@ -785,6 +804,7 @@ namespace PS3API_Demo
                     nbClient = 0;
                     /* We shall wait until next session to be started */
                     while (!MW3_REMOTE.cl_ingame() && !thread_stop) Thread.Sleep(500);
+                    swap_sv_me_m(true);
                 }
 
                 Thread.Sleep(50);
