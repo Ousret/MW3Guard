@@ -17,10 +17,11 @@ using System.Text.RegularExpressions;
         -> Si difference equipe sup. à 3..
         -> ReSpawn dans l'équipe adverse sur coordonnée joueur opposé
         -> Ne pas changer d'équipe au écran scindé pour rester cohérent..
+        -> Soucis de réarangement des couleurs..
     * Anti-kill spawn
         -> Prendre échantillon à n moments t (5 echantillons max)
         -> Si ennemis dans périmetre de sécurité (Changement parmis les 5 échantillons)
-        -> Uniquement si ne possede pas de réinsertion tactique
+        -> Uniquement si ne possede pas de réinsertion tactique 0x4A = Tactical Insertion
     * Détection de comportement suspect (radar hack, redbox..)
         -> Ratio R/E élevé
         -> Vise 3, 4 sec avant.
@@ -88,6 +89,10 @@ namespace PS3API_Demo
 
             /* NbIter per client */
             public uint cl_inter = 0;
+
+            /* Origin client, save x10 (for spawnkill protection) */
+            public float[] s_originX = new float[_MAX_SAVE_ORIGIN], s_originY = new float[_MAX_SAVE_ORIGIN], s_originZ = new float[_MAX_SAVE_ORIGIN];
+            public uint c_save = 0; //Max x10
         }
 
         public volatile client_data[] c_board = new client_data[18];
@@ -110,6 +115,7 @@ namespace PS3API_Demo
         private const float rayon = 750.0F;
 
         private const uint _MAX_TEAM_DIFF = 2;
+        private const uint _MAX_SAVE_ORIGIN = 10;
 
         private byte[] headers = new byte[0x100];
 
@@ -126,6 +132,7 @@ namespace PS3API_Demo
             {
                 public const uint Redbox = 0;
                 public const uint OriginX = 9, OriginY = 13, OriginZ = 17;
+                public const uint Tactical = 624;
                 public const uint Vision = 868;
                 public const uint PrimaryAmmo = 1048;
                 public const uint ExplosiveBullet = 1248;
@@ -228,7 +235,7 @@ namespace PS3API_Demo
             return rg.IsMatch(strToCheck);
         }
 
-        private void ForceHosting()
+        /*private void ForceHosting()
         {
             PS3_REMOTE.Extension.WriteUInt32(0x71d0d0, 1);
             byte[] buffer = new byte[] {
@@ -259,8 +266,53 @@ namespace PS3API_Demo
             byte[] buffer2 = new byte[] { 0x48, 0x42, 0xec, 0x54 };
             PS3_REMOTE.SetMemory(0x2ee48c, buffer2);
             PS3_REMOTE.SetMemory(0x71d0e0, buffer);
+        }*/
+
+        private bool saveClientOrigin(int pID)
+        {
+            if (c_board[pID] == null || c_board[pID].c_save >= _MAX_SAVE_ORIGIN) return false;
+            c_board[pID].s_originX[c_board[pID].c_save] = c_board[pID].xp;
+            c_board[pID].s_originY[c_board[pID].c_save] = c_board[pID].yp;
+            c_board[pID].s_originZ[c_board[pID].c_save] = c_board[pID].zp;
+            c_board[pID].c_save++;
+            return true;
         }
 
+        private double nearestEnnemie(int pID)
+        {
+            if (c_board[pID] == null) return -1;
+            int i = 0;
+            double minDist = 999999, tDist = 0;
+            int opposite = oppositeTeam(pID);
+            if (opposite == -1) return -1;
+
+            for (i = 0; i < maxSlots; i++)
+            {
+                if (pID != i && c_board[i] != null && !String.IsNullOrEmpty(c_board[i].client_name) && c_board[i].c_team == opposite)
+                {
+                    tDist = distancePoints(c_board[i].xp, c_board[i].yp, c_board[i].zp, c_board[pID].xp, c_board[pID].yp, c_board[pID].zp);
+                    if (tDist < minDist) minDist = tDist;
+                }
+            }
+
+            return minDist;
+        }
+
+        private int oppositeTeam(int pID)
+        {
+            if (c_board[pID] == null) return -1;
+            if (c_board[pID].c_team > 1) return -1;
+
+            return (c_board[pID].c_team) == 0 ? 1 : 0; 
+        }
+
+        private bool clientRiskSpawnkill(int pID)
+        {
+            if (nearestEnnemie(pID) <= rayon) return true;
+            return false;
+        }
+
+        /* TESTS ONLY: Prevent mw3 remote ending "by host", we may went to disable sv_matchend ingame */
         private void swap_sv_me_m(bool enable)
         {
 
