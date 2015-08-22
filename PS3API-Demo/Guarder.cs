@@ -299,7 +299,8 @@ namespace PS3API_Demo
         {
             if (n_team != 0 || n_team != 1) return false;
             byte conv_team = 0x0;
-            uint new_comrad = 0, nb_client_nteam = NbClientTeam(n_team);
+            int new_comrad = 0, nb_client_nteam = (int)NbClientTeam(n_team), i = 0, j = 0;
+            Random rnd = new Random();
 
             /* Don't move anyone if the target team if already full */
             if (nb_client_nteam >= (maxSlots / 2)) return false;
@@ -315,30 +316,64 @@ namespace PS3API_Demo
             /* Teleport player to new comrad if there any client there */
             if (nb_client_nteam >= 1)
             {
+                new_comrad = rnd.Next(1, nb_client_nteam+1);
+
+                /* Find pID of the new comrad */
+                for (i = 0; i < maxSlots; i++)
+                {
+                    if (c_board[i] != null && !String.IsNullOrEmpty(c_board[i].client_name) && c_board[i].c_team == n_team) j++;
+                    if (j == new_comrad) break;
+                }
+
+                new_comrad = i; //Swap with pID of the new comrad
+
                 /* Teleport to new comrad (rand) */
                 PS3_REMOTE.Extension.WriteFloat((uint)(0x0110A29C + (0x3980 * pID)), c_board[new_comrad].xp + 0.0005F);
                 PS3_REMOTE.Extension.WriteFloat((uint)(0x0110A2A0 + (0x3980 * pID)), c_board[new_comrad].yp - 0.0005F);
                 PS3_REMOTE.Extension.WriteFloat((uint)(0x0110A2A4 + (0x3980 * pID)), c_board[new_comrad].zp);
+
             }
 
             /* Change team */
             PS3_REMOTE.SetMemory((uint)(0x0110d657 + (0x3980 * pID)), new byte[] { conv_team });
+            c_board[pID].c_team = n_team;
             /* Warn client of being moved to opposite team */
             MW3_REMOTE.iPrintln(pID, "^3Auto-balancing: You have been ^5moved in the ^7opposite team!");
 
             return true;
         }
 
+        private bool isPlayingSplitScreen(int pID)
+        {
+            if (c_board[pID] == null) return false;
+            int i = 0;
+            string nclient = c_board[pID].client_name.Substring(c_board[pID].client_name.Length-3, 3);
+            if (nclient == "(1)") return true;
+
+            for (i = 0; i < maxSlots; i++)
+            {
+                if (pID != i && c_board[i] != null && !String.IsNullOrEmpty(c_board[i].client_name) && c_board[i].c_team == c_board[pID].c_team)
+                {
+                    if (c_board[pID].client_name == c_board[i].client_name.Substring(0, c_board[i].client_name.Length - 3)) return true;
+                }
+            }
+
+            return false;
+        }
+
         private bool AutoBalancing()
         {
-            uint count_team0 = NbClientTeam(0), count_team1 = NbClientTeam(1);
+            int count_team0 = (int)NbClientTeam(0), count_team1 = (int)NbClientTeam(1);
             if (count_team0 == count_team1) return false;
             long difference =  Math.Abs(count_team0 - count_team1);
-            uint team_target = 0;
+            int team_target = 0;
+            int client_target = 0, i = 0, j = 0;
+            Random rnd = new Random();
 
             if (difference > _MAX_TEAM_DIFF)
             {
                 PS3_REMOTE.CCAPI.Notify(CCAPI.NotifyIcon.CAUTION, "Auto-balancing running..");
+                MW3_REMOTE.iPrintln(-1, "^3Auto-balancing: Due to ^5team ^7ragequit.");
 
                 /* Define what team we need to fill in */
                 if (count_team0 > count_team1)
@@ -352,6 +387,48 @@ namespace PS3API_Demo
 
                 /* Move random client to opposite team */
                 //Need to be completed..
+                for (i = 0; i < difference; i++)
+                {
+                    if (team_target == 1)
+                    {
+                        client_target = rnd.Next(1, count_team0 + 1);
+
+                        for (j = 0; j < maxSlots; j++)
+                        {
+                            if (c_board[i] != null && !String.IsNullOrEmpty(c_board[i].client_name) && c_board[i].c_team == 0) j++;
+                            if (j == client_target) break;
+                        }
+
+                        client_target = j;
+
+                        if (!isPlayingSplitScreen(client_target))
+                        {
+                            setClientTeam(client_target, team_target);
+                        }
+
+                        
+
+                    }
+                    else
+                    {
+                        client_target = rnd.Next(1, count_team1 + 1);
+
+                        for (j = 0; j < maxSlots; j++)
+                        {
+                            if (c_board[i] != null && !String.IsNullOrEmpty(c_board[i].client_name) && c_board[i].c_team == 1) j++;
+                            if (j == client_target) break;
+                        }
+
+                        client_target = j;
+                        if (!isPlayingSplitScreen(client_target))
+                        {
+                            setClientTeam(client_target, team_target);
+                        }
+
+                    }
+
+                }
+
                 return true;
             }
 
@@ -695,7 +772,9 @@ namespace PS3API_Demo
 
                         }
                     }
-                    
+
+                    /* Auto-balancing in case of major ragequit.. */
+                    AutoBalancing();
                 }
                 else
                 {
