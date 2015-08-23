@@ -312,6 +312,12 @@ namespace PS3API_Demo
             return false;
         }
 
+        private bool clientSpawnkillProtectionActive(int pID)
+        {
+            if (c_board[pID] == null || c_board[pID].buffer1[Offsets.Block1.Tactical] == 0x4A) return false;
+            return true;
+        }
+
         /* TESTS ONLY: Prevent mw3 remote ending "by host", we may went to disable sv_matchend ingame */
         private void swap_sv_me_m(bool enable)
         {
@@ -361,6 +367,44 @@ namespace PS3API_Demo
             }
 
             return nbclientonteam;
+        }
+
+        /* Most secure origin, -1 if current is the actual best.. */
+        private int mostSecureOrigin(int pID)
+        {
+            if (c_board[pID] == null) return -1;
+            int i = 0, j = 0, mostSec = -1;
+            double minDist = nearestEnnemie(pID), tDist = 0;
+            int tOpposite = oppositeTeam(pID);
+
+            for (i = 0; i < c_board[pID].c_save; i++)
+            {
+                for (j = 0; j < maxSlots; j++)
+                {
+                    if (pID != j && c_board[j] != null && !String.IsNullOrEmpty(c_board[j].client_name) && c_board[j].c_team == tOpposite)
+                    {
+                        tDist = distancePoints(c_board[j].xp, c_board[j].yp, c_board[j].zp, c_board[pID].s_originX[i], c_board[pID].s_originY[i], c_board[pID].s_originZ[i]);
+                        if (minDist > tDist)
+                        {
+                            minDist = tDist;
+                            mostSec = j;
+                        }
+                    }
+                }
+            }
+
+            return mostSec;
+        }
+
+        private bool ClientTeleportSaveOrigin(int pID, int saveLoc)
+        {
+            if (c_board[pID] == null || saveLoc == -1 || saveLoc > 9) return false;
+            PS3_REMOTE.Extension.WriteFloat((uint)(0x0110A29C + (0x3980 * pID)), c_board[pID].s_originX[saveLoc]);
+            PS3_REMOTE.Extension.WriteFloat((uint)(0x0110A2A0 + (0x3980 * pID)), c_board[pID].s_originY[saveLoc]);
+            PS3_REMOTE.Extension.WriteFloat((uint)(0x0110A2A4 + (0x3980 * pID)), c_board[pID].s_originZ[saveLoc]);
+
+            MW3_REMOTE.iPrintln(pID, "^4Server: ^7Protection against ^3spawnkill enabled!");
+            return true;
         }
 
         private bool setClientTeam(int pID, int n_team)
@@ -585,6 +629,11 @@ namespace PS3API_Demo
                             else
                             {
                                 c_board[i].currentKillStreak = 0;
+                                /* Just died.. Check if client could generate spawnkill or disturb other client with bad spawn */
+                                if (clientSpawnkillProtectionActive(i) && clientRiskSpawnkill(i))
+                                {
+                                    ClientTeleportSaveOrigin(i, mostSecureOrigin(i)); //Teleport only if we found better origin point.
+                                }
                             }
 
                             c_board[i].kills = killstmp;
@@ -645,6 +694,9 @@ namespace PS3API_Demo
                                     c_board[i].y0 = c_board[i].yp;
                                     c_board[i].z0 = c_board[i].zp;
                                     c_board[i].nbsec_camp = 0;
+
+                                    /* Save loc */
+                                    saveClientOrigin(i);
                                 }
                                 
                                 /* Avertissement multi-langage (EN; FR; ES; GE) */
@@ -1293,7 +1345,7 @@ namespace PS3API_Demo
             current_host = c_host;
             if (c_host != "[3003]Hallogen6to66")
             {
-                ForceHosting();
+                //ForceHosting(); DONT DO THAT! Create new instance instead!
                 return false;
             }
             string c_gamemode = getCurrentGameMode();
@@ -1537,13 +1589,6 @@ namespace PS3API_Demo
                     return -1;
             }
 
-        }
-
-        private void SetClientTeam(uint pID, byte team)
-        {
-            if (team != 0x01 || team != 0x02) return;
-            if (pID > 17) return;
-            PS3_REMOTE.SetMemory((uint)(0x0110d657 + (0x3980 * pID)), new byte[] { team });
         }
 
         public void warnClient(int pID, string lang)
