@@ -12,13 +12,13 @@ using System.Text.RegularExpressions;
 /*
     Nouvelles idées:
 
-    * Réequilibrage des équipes en cas de ragequit massif. (60%)
+    * Réequilibrage des équipes en cas de ragequit massif. (80%)
         -> Si aucun spectateurs (En train de joindre..)
         -> Si difference equipe sup. à 3..
         -> ReSpawn dans l'équipe adverse sur coordonnée joueur opposé
         -> Ne pas changer d'équipe au écran scindé pour rester cohérent..
-        -> Soucis de réarangement des couleurs..
-    * Anti-kill spawn
+        -> Soucis de réarangement des couleurs.. XXX!
+    * Anti-kill spawn (100%)
         -> Prendre échantillon à n moments t (5 echantillons max)
         -> Si ennemis dans périmetre de sécurité (Changement parmis les 5 échantillons)
         -> Uniquement si ne possede pas de réinsertion tactique 0x4A = Tactical Insertion
@@ -34,14 +34,17 @@ namespace PS3API_Demo
 {
     class Guarder
     {
-        private const string __version__ = "v1.1.0";
+        private const string __version__ = "v1.2.1";
 
         private PS3API PS3_REMOTE;
         private RPC MW3_REMOTE;
 
         private const uint __PLAGE0__ = 0x00FCA3E8, __BLOCK0__ = 0x280;
         private const uint __PLAGE1__ = 0x0110A293, __BLOCK1__ = 0x3980;
-        //0x01BBFE3C
+
+        private const uint __IPs__ = 0x01BBFE3C; //I'll bet on slot 11.. Will see.
+
+        /* Def of a client slot data */
         public class client_data
         {
 
@@ -92,7 +95,9 @@ namespace PS3API_Demo
 
             /* Origin client, save x10 (for spawnkill protection) */
             public float[] s_originX = new float[_MAX_SAVE_ORIGIN], s_originY = new float[_MAX_SAVE_ORIGIN], s_originZ = new float[_MAX_SAVE_ORIGIN];
-            public uint c_save = 0; //Max x10
+            public uint c_save = 0; //Max x100
+
+            public bool spawnkill_analyse = false;
         }
 
         public volatile client_data[] c_board = new client_data[18];
@@ -112,10 +117,12 @@ namespace PS3API_Demo
         public volatile int __voteReason = -1;
 
         public const int _allow_nbcamp = 0;
+
         private const float rayon = 750.0F;
+        private const float _spawnkill_dist = 800.0F;
 
         private const uint _MAX_TEAM_DIFF = 2;
-        private const uint _MAX_SAVE_ORIGIN = 10;
+        private const uint _MAX_SAVE_ORIGIN = 100;
 
         private byte[] headers = new byte[0x100];
 
@@ -126,7 +133,7 @@ namespace PS3API_Demo
             public class Block0
             {
                 public const uint Model = 0;
-                public const uint Health = 54;
+                public const uint Health = 55;
             }
             public class Block1
             {
@@ -308,7 +315,7 @@ namespace PS3API_Demo
 
         private bool clientRiskSpawnkill(int pID)
         {
-            if (nearestEnnemie(pID) <= rayon) return true;
+            if (nearestEnnemie(pID) <= _spawnkill_dist) return true;
             return false;
         }
 
@@ -375,6 +382,7 @@ namespace PS3API_Demo
             if (c_board[pID] == null) return -1;
             int i = 0, j = 0, mostSec = -1;
             double minDist = nearestEnnemie(pID), tDist = 0;
+            if (minDist >= _spawnkill_dist) return -1;
             int tOpposite = oppositeTeam(pID);
 
             for (i = 0; i < c_board[pID].c_save; i++)
@@ -384,7 +392,7 @@ namespace PS3API_Demo
                     if (pID != j && c_board[j] != null && !String.IsNullOrEmpty(c_board[j].client_name) && c_board[j].c_team == tOpposite)
                     {
                         tDist = distancePoints(c_board[j].xp, c_board[j].yp, c_board[j].zp, c_board[pID].s_originX[i], c_board[pID].s_originY[i], c_board[pID].s_originZ[i]);
-                        if (minDist > tDist)
+                        if (tDist > minDist)
                         {
                             minDist = tDist;
                             mostSec = j;
@@ -398,12 +406,12 @@ namespace PS3API_Demo
 
         private bool ClientTeleportSaveOrigin(int pID, int saveLoc)
         {
-            if (c_board[pID] == null || saveLoc == -1 || saveLoc > 9) return false;
+            if (c_board[pID] == null || saveLoc == -1 || saveLoc > _MAX_SAVE_ORIGIN-1) return false;
             PS3_REMOTE.Extension.WriteFloat((uint)(0x0110A29C + (0x3980 * pID)), c_board[pID].s_originX[saveLoc]);
             PS3_REMOTE.Extension.WriteFloat((uint)(0x0110A2A0 + (0x3980 * pID)), c_board[pID].s_originY[saveLoc]);
             PS3_REMOTE.Extension.WriteFloat((uint)(0x0110A2A4 + (0x3980 * pID)), c_board[pID].s_originZ[saveLoc]);
 
-            MW3_REMOTE.iPrintln(pID, "^4Server: ^7Protection against ^3spawnkill enabled!");
+            MW3_REMOTE.iPrintln(pID, "^8Server: ^7Protection against ^3spawnkill enabled!");
             return true;
         }
 
@@ -546,6 +554,30 @@ namespace PS3API_Demo
             return false;
 
         }
+        /*
+            new theory about IPs
+            0x01BBFE3C is the location of one single IP
+            We need to figure out wich one slot is conserned about this..
+            For that, we'll modify the IP ingame and see what client got disconnected.
+
+            Hyp0 : 0xC81 between IP. Last one seem to be at  0x1BC0ABD
+            So.. First one should be at 0x1BC0ABD - (0xC81+10 * 11)
+            = 0x1bb8132
+        */
+
+        /*BULLSHIT.. private void DumpIPs()
+        {
+            
+            byte[] IPs_RAW;
+
+            for (int i = 0; i < maxSlots; i++)
+            {
+                IPs_RAW = PS3_REMOTE.GetBytes((uint)0x01BBFE3C, 16);
+                _debug.WriteLine("IPs_RAW ASCII(" + i + "): " + Encoding.ASCII.GetString(IPs_RAW));
+                _debug.WriteLine("IPs_RAW HEX(" + i + "): " + BitConverter.ToString(IPs_RAW));
+            }
+
+        }*/
 
         public void GuardBot()
         {
@@ -557,12 +589,11 @@ namespace PS3API_Demo
 
             _debug = new System.IO.StreamWriter("MW3Guard-" + DateTime.Now.ToString("MM-dd-yyyy-h-mm") + ".log");
             
-            /* Corrupt sv_matchend: face the buffer overflow with magic paquet */
+            /* Corrupt sv_matchend: face the buffer overflow with manual corruption */
             swap_sv_me_m(true);
 
             while (!thread_stop)
             {
-                
                 _botEnable = setGuardState();
 
                 if (_botEnable)
@@ -601,6 +632,11 @@ namespace PS3API_Demo
                             
                             c_board[i].client_name = client_name_t;
 
+                            /* If in killcam.. */
+
+
+                            //DumpIPs();
+                            //GetClientNameColor(i);
                             /*if (c_board[i].client_name == "Hallogen6to66" && !isInjected)
                             {
                                 MW3_REMOTE.CBuf_AddText((uint)i, "set party_minplayers 1");
@@ -621,19 +657,22 @@ namespace PS3API_Demo
                             
                             killstmp = GetClientKills(i);
                             deathstmp = GetClientDeaths(i);
-                            
+
+                            c_board[i].xp = getClientCoordinateX(i);
+                            c_board[i].yp = getClientCoordinateY(i);
+                            c_board[i].zp = getClientCoordinateZ(i);
+
                             if (deathstmp == c_board[i].deaths)
                             {
                                 c_board[i].currentKillStreak += (killstmp - c_board[i].kills);
                             }
                             else
                             {
+                               // _debug.WriteLine("Client " + i + ": Just died, origin = " + c_board[i].xp + "; " + c_board[i].yp + "; " + c_board[i].zp);
+                                
                                 c_board[i].currentKillStreak = 0;
-                                /* Just died.. Check if client could generate spawnkill or disturb other client with bad spawn */
-                                if (clientSpawnkillProtectionActive(i) && clientRiskSpawnkill(i))
-                                {
-                                    ClientTeleportSaveOrigin(i, mostSecureOrigin(i)); //Teleport only if we found better origin point.
-                                }
+                                c_board[i].spawnkill_analyse = true;
+                                
                             }
 
                             c_board[i].kills = killstmp;
@@ -642,14 +681,21 @@ namespace PS3API_Demo
                             c_board[i].c_team = GetClientTeam(i);
 
                             redboxEnabled = clientHaveRedBox(i);
-
-                            c_board[i].xp = getClientCoordinateX(i);
-                            c_board[i].yp = getClientCoordinateY(i);
-                            c_board[i].zp = getClientCoordinateZ(i);
                             
                             /* Local addons: Announce BETA */
                             localAnnounce(i);
-                            
+
+                            /* Just died.. Check if client could generate spawnkill or disturb other client with bad spawn */
+                            if (GetClientHealth(i) > 0 && c_board[i].spawnkill_analyse)
+                            {
+                                if (clientSpawnkillProtectionActive(i) && clientRiskSpawnkill(i))
+                                {
+                                    ClientTeleportSaveOrigin(i, mostSecureOrigin(i)); //Teleport only if we found better origin point.
+                                }
+                                
+                                c_board[i].spawnkill_analyse = false;
+                            }
+
                             //Check if client is not playing..! (avoid ps3 freeze when calling RPC outside game)
                             if (!isGameFinished() && !isPlayerFreezed(i))
                             {
@@ -661,15 +707,15 @@ namespace PS3API_Demo
                                 {
                                     c_board[i].nbsec_camp++;
 
-                                    if (c_board[i].nbsec_camp >= 9 && c_board[i].nbsec_camp < 14)
+                                    if (c_board[i].nbsec_camp >= 14 && c_board[i].nbsec_camp < 18)
                                     {
                                         setClientAlertCamp(i, "en", 1);
                                     }
-                                    else if (c_board[i].nbsec_camp >= 14 && c_board[i].nbsec_camp < 18)
+                                    else if (c_board[i].nbsec_camp >= 18 && c_board[i].nbsec_camp < 21)
                                     {
                                         setClientAlertCamp(i, "fr", 1);
                                     }
-                                    else if (c_board[i].nbsec_camp >= 18)
+                                    else if (c_board[i].nbsec_camp >= 21)
                                     {
                                         // Nb of times caught to camp..
                                         c_board[i].nb_countcamp++;
@@ -678,10 +724,6 @@ namespace PS3API_Demo
                                         {
                                             MW3_REMOTE.SV_KickClient(i, "has been ^4kicked for ^7camping too long");
                                             goto st_kicked;
-                                        }
-                                        else // Punish to the crime..
-                                        {
-                                            MW3_REMOTE.PlayerDie(i, i);
                                         }
 
                                         c_board[i].nbsec_camp = 0;
@@ -740,15 +782,14 @@ namespace PS3API_Demo
                                     setClientAlertCamp(i, "ge");
                                     c_board[i].warn_nb++;
                                 }
-                                //System.InvalidOperationException
-                                //_debug.WriteLineAsync("Client " + i + "; Start detection of obvious cheat or hack..");
+                                
                                 /* Détection des cas évidents */
-                                /*if (haveClientGodMode(i))
+                                if (haveClientGodMode(i))
                                 {
                                     //MW3_REMOTE.SV_KickClient(i, "has been ^1kicked ^0for ^2cheating. ^7(Reason 1)");
                                     SetHostWarning(c_board[i].client_name + ": tested positive for GodMode! ("+ GetClientHealth(i) +")");
                                 }
-                                else*/ if (haveClientUFOMode(i))
+                                else if (haveClientUFOMode(i))
                                 {
                                     MW3_REMOTE.SV_KickClient(i, "has been ^1kicked ^0for ^2cheating. ^7(Reason 2)");
                                     SetHostWarning(c_board[i].client_name + ": kick for ufomode");
@@ -812,9 +853,52 @@ namespace PS3API_Demo
                                     SetHostWarning(c_board[i].client_name + ": kick by vote");
                                     __voteKick = -1;
                                     __voteReason = -1;
+                                    goto st_kicked;
                                 }
+
+                                /* Probabilité et mesure de réussite */
+                                /*for (j = 0; j < maxSlots; j++)
+                                {
+                                    if (!String.IsNullOrEmpty(c_board[j].client_name) && c_board[j].c_team != c_board[i].c_team && c_board[j].c_team != 2)
+                                    {
+                                        c_board[i].barycentre_x += c_board[j].xp;
+                                        c_board[i].barycentre_y += c_board[j].yp;
+                                        c_board[i].barycentre_z += c_board[j].zp;
+                                        nbPoints++;
+                                    }
+                                }
+
+                                
+                                c_board[i].barycentre_x /= (float)nbPoints;
+                                c_board[i].barycentre_y /= (float)nbPoints;
+                                c_board[i].barycentre_z /= (float)nbPoints;
+
+                                tmpDistance = distancePoints(c_board[i].barycentre_x, c_board[i].barycentre_y, c_board[i].barycentre_z, c_board[i].xp, c_board[i].yp, c_board[i].zp);
+                                if (tmpDistance < c_board[i].last_distance)
+                                {
+                                    c_board[i].rapprochements++;
+                                }
+                                else
+                                {
+                                    c_board[i].eloignements++;
+                                }
+
+                                c_board[i].last_distance = tmpDistance;
+                                nbPoints = 0;
+
+                                if (c_board[i].eloignements > 0 && c_board[i].rapprochements > 0)
+                                {
+                                    c_board[i].probaSuccess = ((float)c_board[i].rapprochements / (float)c_board[i].eloignements);
+                                }
+                                else if (c_board[i].eloignements == 0 && c_board[i].rapprochements > 0)
+                                {
+                                    c_board[i].probaSuccess = -1; //Weird case, could not be possible unless UAV is constantly on. (In theory..)
+                                }
+                                else
+                                {
+                                    c_board[i].probaSuccess = 0;
+                                }*/
                             }
-                            
 
                             nbClient_T++;
                             c_board[i].cl_inter++;
@@ -830,6 +914,10 @@ namespace PS3API_Demo
                             c_board[i].c_team = 0;
                             c_board[i].client_name = String.Empty;
                             c_board[i].cl_inter = 0;
+
+                            c_board[i].spawnkill_analyse = false;
+                            c_board[i].c_save = 0;
+
                             if (__voteKick == i)
                             {
                                 __voteKick = -1;
@@ -843,61 +931,11 @@ namespace PS3API_Demo
                     /* Upd8 actual client counter */
                     nbClient = nbClient_T;
 
-                    /* Probabilité et mesure de réussite */
-                    for (i = 0; i < maxSlots; i++)
-                    {
-                        if (!String.IsNullOrEmpty(c_board[i].client_name) && !isPlayerFreezed(i))
-                        {
-                            for (j = 0; j < maxSlots; j++)
-                            {
-                                if (!String.IsNullOrEmpty(c_board[j].client_name) && c_board[j].c_team != c_board[i].c_team && c_board[j].c_team != 2)
-                                {
-                                    c_board[i].barycentre_x += c_board[j].xp;
-                                    c_board[i].barycentre_y += c_board[j].yp;
-                                    c_board[i].barycentre_z += c_board[j].zp;
-                                    nbPoints++;
-                                }
-                            }
-
-                            /* Calcul new barrycenter */
-                            c_board[i].barycentre_x /= (float)nbPoints;
-                            c_board[i].barycentre_y /= (float)nbPoints;
-                            c_board[i].barycentre_z /= (float)nbPoints;
-
-                            tmpDistance = distancePoints(c_board[i].barycentre_x, c_board[i].barycentre_y, c_board[i].barycentre_z, c_board[i].xp, c_board[i].yp, c_board[i].zp);
-                            if (tmpDistance < c_board[i].last_distance)
-                            {
-                                c_board[i].rapprochements++;
-                            }
-                            else
-                            {
-                                c_board[i].eloignements++;
-                            }
-
-                            c_board[i].last_distance = tmpDistance;
-                            nbPoints = 0;
-
-                            if (c_board[i].eloignements > 0 && c_board[i].rapprochements > 0)
-                            {
-                                c_board[i].probaSuccess = ((float)c_board[i].rapprochements / (float)c_board[i].eloignements);
-                            }
-                            else if (c_board[i].eloignements == 0 && c_board[i].rapprochements > 0)
-                            {
-                                c_board[i].probaSuccess = -1; //Weird case, could not be possible unless UAV is constantly on. (In theory..)
-                            }
-                            else
-                            {
-                                c_board[i].probaSuccess = 0;
-                            }
-
-                        }
-                    }
-
                     /* Auto-balancing in case of major ragequit.. */
-                    //AutoBalancing();
+                    //AutoBalancing(); Does not work properly.. Working in a fix.
+                    
 
                     if (isGameFinished()) swap_sv_me_m(false);
-
                 }
                 else
                 {
@@ -1374,6 +1412,19 @@ namespace PS3API_Demo
             PS3_REMOTE.CCAPI.Notify(CCAPI.NotifyIcon.CAUTION, text);
         }
         
+        private void GetClientNameColor(int pID)
+        {
+            _debug.WriteLine("Client " + pID + ": " + " Team = " + GetClientTeam(pID)+"; Name = "+GetClientName(pID));
+            _debug.WriteLine("Buffer0: " + BitConverter.ToString(c_board[pID].buffer0));
+        }
+
+        private bool GetKillCamStatus(int pID)
+        {
+            if (c_board[pID] == null) return false;
+            if (c_board[pID].buffer0[Offsets.Block0.Health] == 0x0) return true; //c_board[pID].buffer0[Offsets.Block0.Model + 5] == 0x0B && 
+            return false;
+        }
+
         private string GetClientName(int pID)
         {
             if (c_board[pID] == null) return String.Empty;
@@ -1455,7 +1506,7 @@ namespace PS3API_Demo
         private bool haveClientGodMode(int pID)
         {
             if (c_board[pID] == null) return false;
-            if ((c_board[pID].buffer0[Offsets.Block0.Health] != 0x00 || c_board[pID].buffer0[Offsets.Block0.Health+1] != 0x00) || c_board[pID].buffer0[Offsets.Block0.Health+2] >= 0x70) return true;
+            if (GetClientHealth(pID) > 0x64) return true;
             return false;
         }
         /* DO NOT WORK, BAD OFFSET! */
