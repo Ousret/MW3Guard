@@ -38,8 +38,11 @@ Licenses
 --------------------------------
 
 MW3Guard (c) Ousret; is under MIT Licence. (Open source)
+
 Modern Warfare(r) 3 (c) Activision, IW. (Closed)
+
 PlayStation(r) 3 (c) SONY (Closed..)
+
 CCAPI 2.60 (c) Enstone (Closed..)
 
 --------------------------------
@@ -54,13 +57,17 @@ FAQ
 --------------------------------
 
 Q: Can I disable cheat protection for a specific client ?
+
 A: No.
 
 Q: Can I use this software if I'm not the host ?
+
 A: No.
 
 Q: How could I being the host ?
+
 A: You got two solution at your disposal, first clic Process then Enable force host. Or you can mod. your eboot. (Google can help you)
 
 Q: Could I force hosting when ingame ?
+
 A: No. But it's not impossible. Goooogle..
