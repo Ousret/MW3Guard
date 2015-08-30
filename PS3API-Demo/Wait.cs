@@ -8,7 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace PS3API_Demo
+namespace MW3Guard_PS3
 {
     public partial class Wait : Form
     {

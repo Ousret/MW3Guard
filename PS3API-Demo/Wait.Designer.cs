@@ -1,4 +1,4 @@
-﻿namespace PS3API_Demo
+﻿namespace MW3Guard_PS3
 {
     partial class Wait
     {
@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Wait));
             this.label1 = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
@@ -48,8 +49,12 @@
             this.ClientSize = new System.Drawing.Size(413, 123);
             this.ControlBox = false;
             this.Controls.Add(this.label1);
-            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
+            this.Cursor = System.Windows.Forms.Cursors.WaitCursor;
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
+            this.MaximizeBox = false;
             this.MaximumSize = new System.Drawing.Size(429, 162);
+            this.MinimizeBox = false;
             this.MinimumSize = new System.Drawing.Size(429, 162);
             this.Name = "Wait";
             this.Text = "Loading..";
