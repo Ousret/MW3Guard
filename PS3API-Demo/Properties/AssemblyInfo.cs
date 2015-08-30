@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 // l'ensemble d'attributs suivant. Changez les valeurs de ces attributs pour modifier les informations
 // associées à un assembly.
 [assembly: AssemblyTitle("MW3Guarder")]
-[assembly: AssemblyDescription("PC analysis of ingame instance of PS3 MW3.")]
+[assembly: AssemblyDescription("To protect and serve.")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Ousret")]
 [assembly: AssemblyProduct("MW3Guarder")]
