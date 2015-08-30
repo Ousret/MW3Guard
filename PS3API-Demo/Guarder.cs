@@ -75,7 +75,8 @@ namespace MW3Guard_PS3
             /* Stats pour rapprochement et eloignement successif (Ratio R/E) */
             public uint rapprochements = 0, eloignements = 0;
             public float probaSuccess;
-
+            /* RatioRE nbTimes */
+            public int nb_alert_ratio_re = 0;
             /* CustomKillstreak! (mod. QuakeLight) */
             public int lastKillStreak = 0, currentKillStreak = 0;
 
@@ -171,6 +172,7 @@ namespace MW3Guard_PS3
         {
             MW3_REMOTE.Enable();
         }
+
         /// <summary>
         /// Change some dvar in order to force party hosting before ingame!
         /// </summary>
@@ -205,6 +207,7 @@ namespace MW3Guard_PS3
 
             return true;
         }
+
         /// <summary>
         /// Check if PSN ID is valid according to current policy
         /// </summary>
@@ -224,6 +227,7 @@ namespace MW3Guard_PS3
             
             return rg.IsMatch(strToCheck);
         }
+
         /// <summary>
         /// Save client pos. x,y,z in order to reuse them with spawnkill protection
         /// </summary>
@@ -238,6 +242,7 @@ namespace MW3Guard_PS3
             c_board[pID].c_save++;
             return true;
         }
+
         /// <summary>
         /// Give distance between pID and his nearest ennemie
         /// </summary>
@@ -261,6 +266,7 @@ namespace MW3Guard_PS3
 
             return minDist;
         }
+
         /// <summary>
         /// Return opposite team of one client
         /// </summary>
@@ -272,6 +278,7 @@ namespace MW3Guard_PS3
 
             return (c_board[pID].c_team) == 0 ? 1 : 0; 
         }
+
         /// <summary>
         /// Test if client risk to be spawnkilled (test distance)
         /// </summary>
@@ -281,6 +288,7 @@ namespace MW3Guard_PS3
             if (nearestEnnemie(pID) <= _spawnkill_dist) return true;
             return false;
         }
+
         /// <summary>
         /// Test if client is elligible for spawnkill protection.
         /// </summary>
@@ -921,8 +929,24 @@ namespace MW3Guard_PS3
                                 }
                                 else if(enable_uav_redbox_analysis && c_board[i].probaSuccess > 2.1F && c_board[i].kills > 10)
                                 {
-                                    SetHostWarning(c_board[i].client_name + ": probable UAV or RedBox");
-                                    _debug.WriteLine("[" + DateTime.Now.ToString("MM-dd-yyyy-h-mm") + "] " + c_board[i].client_name + " have probable illegal UAV or RedBox (No-kick)");
+                                    c_board[i].nb_alert_ratio_re++;
+
+                                    if (c_board[i].nb_alert_ratio_re == 1)
+                                    {
+                                        SetHostWarning(c_board[i].client_name + ": may have illegal UAV or RedBox");
+                                        _debug.WriteLine("[" + DateTime.Now.ToString("MM-dd-yyyy-h-mm") + "] " + c_board[i].client_name + " may have illegal UAV or RedBox (No-kick)");
+                                    }
+                                    else if (c_board[i].nb_alert_ratio_re == 15)
+                                    {
+                                        SetHostWarning(c_board[i].client_name + ": probable illegal UAV or RedBox");
+                                        _debug.WriteLine("[" + DateTime.Now.ToString("MM-dd-yyyy-h-mm") + "] " + c_board[i].client_name + " have probable illegal UAV or RedBox (No-kick)");
+                                    }else if(c_board[i].nb_alert_ratio_re == 25)
+                                    {
+                                        SetHostWarning(c_board[i].client_name + ": high chance of illegal UAV or RedBox");
+                                        _debug.WriteLine("[" + DateTime.Now.ToString("MM-dd-yyyy-h-mm") + "] " + c_board[i].client_name + " should have illegal UAV or RedBox (No-kick)");
+                                    }
+                                    
+                                    
                                 }
                                 else if (__voteKick == i)
                                 {
@@ -1026,6 +1050,7 @@ namespace MW3Guard_PS3
                             c_board[i].cl_inter = 0;
                             c_board[i].n_level = 1;
                             c_board[i].n_prestige = 0;
+                            c_board[i].nb_alert_ratio_re = 0;
 
                             c_board[i].spawnkill_analyse = false;
                             c_board[i].c_save = 0;
