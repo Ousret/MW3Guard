@@ -158,6 +158,14 @@ namespace MW3Guard_PS3
 
         private void Main_FormClosing(object sender, FormClosingEventArgs e)
         {
+            if (oThread != null && oThread.IsAlive)
+            {
+                MW3_BOT.thread_stop = true;
+                MW3_GUARDER.Stop();
+
+                while (oThread.IsAlive) Thread.Sleep(200);
+            }
+
             PS3.DisconnectTarget();
         }
 
@@ -203,6 +211,7 @@ namespace MW3Guard_PS3
                 PS3_CCAPI_CONNECTED = false;
                 attachProcessToolStripMenuItem.Enabled = false;
                 initializeGuarderToolStripMenuItem.Enabled = false;
+                enableForceHostToolStripMenuItem.Enabled = false;
                 MessageBox.Show("You are now disconnected from PS3 CCAPI", "MW3Guard", MessageBoxButtons.OK, MessageBoxIcon.Asterisk);
             }
             else if (PS3.ConnectTarget())
@@ -343,6 +352,11 @@ namespace MW3Guard_PS3
         {
             var form2 = new Console();
             form2.Show();
+        }
+
+        private void menuStrip1_ItemClicked(object sender, ToolStripItemClickedEventArgs e)
+        {
+
         }
     }
 }
