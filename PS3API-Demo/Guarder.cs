@@ -662,7 +662,7 @@ namespace MW3Guard_PS3
 
             while (!thread_stop)
             {
-                _botEnable = setGuardState(); //Check if is something to watch
+                _botEnable = setGuardState(); //Check if there is something to secure
 
                 if (_botEnable)
                 {
@@ -1638,10 +1638,12 @@ namespace MW3Guard_PS3
 
             string c_host = getHostName();
             current_host = c_host;
+
             if (extractNameWithoutTeamMark(current_host) != _primary_name_)
             {
                 //ForceHosting(); DONT DO THAT! Create new instance instead!
                 _debug.WriteLine("[" + DateTime.Now.ToString("MM-dd-yyyy-h-mm") + "] MW3Guard cannot work if you'r not the host..!");
+                
                 return false;
             }
 
@@ -1654,7 +1656,7 @@ namespace MW3Guard_PS3
 
             if (c_maps != current_maps)
             {
-                _debug.WriteLine("[" + DateTime.Now.ToString("MM-dd-yyyy-h-mm") + "] MW3Guard is waking up.. ("+current_gamemode+"; "+current_maps+"; "+current_host+")");
+                _debug.WriteLine("[" + DateTime.Now.ToString("MM-dd-yyyy-h-mm") + "] MW3Guard is waking up.. ("+current_gamemode+"; "+ c_maps + "; "+current_host+")");
                 PS3_REMOTE.CCAPI.Notify(CCAPI.NotifyIcon.INFO, "New instance");
                 Array.Clear(c_board, 0, 18);
                 current_maps = c_maps;
