@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.23107.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PS3API-Demo", "PS3API-Demo\PS3API-Demo.csproj", "{E8B7EC0F-C467-43CE-9755-2B64851B77F1}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MW3Guard-PS3", "PS3API-Demo\MW3Guard-PS3.csproj", "{E8B7EC0F-C467-43CE-9755-2B64851B77F1}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{3243B2C8-1BEA-465A-BAF6-9A127A905E67}"
 EndProject
