@@ -16,6 +16,11 @@ public class RPC
         PS3 = INPUT;
     }
 
+    /// <summary>
+    /// Call function with or without parameters, use it with caution, could freeze your unit!
+    /// </summary>
+    /// <param name="address">Function offset</param>
+    /// <param name="parameters">Array of params</param>
     public int Call(uint address, params object[] parameters)
     {
         int length = parameters.Length;
@@ -84,6 +89,9 @@ public class RPC
         return PS3.Extension.ReadInt32(0x1005004c);
     }
 
+    /// <summary>
+    /// Check if we're ingame or not
+    /// </summary>
     public bool cl_ingame()
     {
         byte[] data = new byte[1] { 0x00 };
@@ -247,7 +255,7 @@ public class RPC
     public string Key_IsDown(uint ClientNum)
     {
         byte[] bytes = new byte[3];
-        GetMemoryR(0x110d5e1 + (0x3980 * ClientNum), ref bytes);
+        GetMemoryR(0x110d5e1 + (0x3980 * ClientNum), ref bytes); //0x018d75d4
         string str4 = BitConverter.ToString(bytes).Replace("-", "").Replace(" ", "");
         switch (str4)
         {
@@ -545,6 +553,11 @@ public class RPC
         PS3.SetMemory(pointer, dvar);
         return true;
         
+    }
+
+    public void sv_matchend()
+    {
+        Call(Offsets.Addresses.sv_matchend, new object[] { });
     }
 
     public class Offsets
