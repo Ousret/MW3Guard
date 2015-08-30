@@ -37,7 +37,7 @@ What this software could do ?
 Licenses
 --------------------------------
 
-MW3Guard (c) Ousret; is under MIT Licence. (Open source)
+MW3Guard (c) Ousret; is under MIT License. (Open source)
 
 Modern Warfare(r) 3 (c) Activision, IW. (Closed)
 
