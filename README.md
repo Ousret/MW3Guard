@@ -19,6 +19,9 @@ What new in 1.4.1 ?
 - Stable!
 - Compatible with lastest patch 1.24 (Out for year now..)
 
+sha256 checksum
+48f22e68ad809a52b1cf15135c8514508d977849f50797937ffc8e9f87d6972d *MW3Guard1.4.1.zip
+
 ### MW3Guard
 You shall not download binarie from unknow source. Check lastest md5 checksum from this page.
 I cannot be held responsible for any damage or unproper use of this software.
