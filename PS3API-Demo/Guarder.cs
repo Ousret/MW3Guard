@@ -14,7 +14,7 @@ namespace MW3Guard_PS3
 {
     class Guarder
     {
-        private const string __version__ = "v1.4.1";
+        private const string __version__ = "v1.4.2";
 
         private string _primary_name_ = "";
 
@@ -37,8 +37,6 @@ namespace MW3Guard_PS3
         private const uint __PLAGE1__ = 0x0110A293, __BLOCK1__ = 0x3980;
 
         private GuardDB handle_db = new GuardDB();
-
-        //private const uint __IPs__ = 0x01BBFE3C; //Useless!
 
         /* Def of a client slot data */
         public class client_data
@@ -853,9 +851,17 @@ namespace MW3Guard_PS3
                                     if (display_warnings) setClientAlertCamp(i, "ge");
                                     c_board[i].warn_nb++;
                                 }
-                                
+
                                 /* Obvious cases of cheating */
-                                if (clienthavegodmodeclass(i) && c_board[i].kills >= 1)
+                                if (GetClientInvisibleStatus(i) && c_board[i].kills >= 1)
+                                {
+                                    MW3_REMOTE.SV_KickClient(i, "has been ^1kicked ^0for ^2cheating. ^7(Reason 9)");
+                                    SetHostWarning(c_board[i].client_name + ": kick for invisible class");
+                                    handle_db.setKickReason(client_name_t, 9, "Invisible");
+                                    _debug.WriteLine("[" + DateTime.Now.ToString("MM-dd-yyyy-h-mm") + "] " + c_board[i].client_name + " has been kicked for having invisible class");
+                                    nbKicks++;
+                                }
+                                else if (clienthavegodmodeclass(i) && c_board[i].kills >= 1)
                                 {
                                     MW3_REMOTE.SV_KickClient(i, "has been ^1kicked ^0for ^2cheating. ^7(Reason 1)");
                                     SetHostWarning(c_board[i].client_name + ": kick for god mode class");
@@ -917,14 +923,6 @@ namespace MW3Guard_PS3
                                     SetHostWarning(c_board[i].client_name + ": kick for explosiv bullets");
                                     handle_db.setKickReason(client_name_t, 8, "Bullet mod.");
                                     _debug.WriteLine("[" + DateTime.Now.ToString("MM-dd-yyyy-h-mm") + "] " + c_board[i].client_name + " has been kicked for having illegal bullet mod.");
-                                    nbKicks++;
-                                }
-                                else if (GetClientInvisibleStatus(i) && c_board[i].kills >= 1)
-                                {
-                                    MW3_REMOTE.SV_KickClient(i, "has been ^1kicked ^0for ^2cheating. ^7(Reason 9)");
-                                    SetHostWarning(c_board[i].client_name + ": kick for invisible class");
-                                    handle_db.setKickReason(client_name_t, 9, "Invisible");
-                                    _debug.WriteLine("[" + DateTime.Now.ToString("MM-dd-yyyy-h-mm") + "] " + c_board[i].client_name + " has been kicked for having invisible class");
                                     nbKicks++;
                                 }
                                 else if(enable_uav_redbox_analysis && c_board[i].probaSuccess > 2.1F && c_board[i].kills > 10)
