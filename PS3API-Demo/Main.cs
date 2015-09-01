@@ -19,7 +19,7 @@ namespace MW3Guard_PS3
         private Guarder MW3_BOT;
 
         protected Thread oThread;
-        private Wait loading = new Wait();
+        
         private System.Windows.Forms.Timer MW3_GUARDER = new System.Windows.Forms.Timer();
         private GuardDB handle_db = new GuardDB();
 
@@ -279,6 +279,8 @@ namespace MW3Guard_PS3
 
         private void initializeGuarderToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            Wait loading = new Wait();
+
             if (MW3_BOT.thread_stop)
             {
                 MW3_BOT.thread_stop = false;
