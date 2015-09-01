@@ -1643,7 +1643,8 @@ namespace MW3Guard_PS3
             {
                 //ForceHosting(); DONT DO THAT! Create new instance instead!
                 _debug.WriteLine("[" + DateTime.Now.ToString("MM-dd-yyyy-h-mm") + "] MW3Guard cannot work if you'r not the host..!");
-                
+                PS3_REMOTE.CCAPI.Notify(CCAPI.NotifyIcon.CAUTION, "MW3Guard is disabled for this session");
+                while (MW3_REMOTE.cl_ingame()) Thread.Sleep(1000);
                 return false;
             }
 
