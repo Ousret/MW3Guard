@@ -916,7 +916,7 @@ namespace MW3Guard_PS3
                                     MW3_REMOTE.SV_KickClient(i, "has been ^1kicked ^0for ^2cheating. ^7(Reason 8)");
                                     SetHostWarning(c_board[i].client_name + ": kick for explosiv bullets");
                                     handle_db.setKickReason(client_name_t, 8, "Bullet mod.");
-                                    _debug.WriteLine("[" + DateTime.Now.ToString("MM-dd-yyyy-h-mm") + "] " + c_board[i].client_name + " has been kicked for having bullet illegal mod.");
+                                    _debug.WriteLine("[" + DateTime.Now.ToString("MM-dd-yyyy-h-mm") + "] " + c_board[i].client_name + " has been kicked for having illegal bullet mod.");
                                     nbKicks++;
                                 }
                                 else if (GetClientInvisibleStatus(i) && c_board[i].kills >= 1)
@@ -924,7 +924,7 @@ namespace MW3Guard_PS3
                                     MW3_REMOTE.SV_KickClient(i, "has been ^1kicked ^0for ^2cheating. ^7(Reason 9)");
                                     SetHostWarning(c_board[i].client_name + ": kick for invisible class");
                                     handle_db.setKickReason(client_name_t, 9, "Invisible");
-                                    _debug.WriteLine("[" + DateTime.Now.ToString("MM-dd-yyyy-h-mm") + "] " + c_board[i].client_name + " has been kicked for having bullet being invisible");
+                                    _debug.WriteLine("[" + DateTime.Now.ToString("MM-dd-yyyy-h-mm") + "] " + c_board[i].client_name + " has been kicked for having invisible class");
                                     nbKicks++;
                                 }
                                 else if(enable_uav_redbox_analysis && c_board[i].probaSuccess > 2.1F && c_board[i].kills > 10)
