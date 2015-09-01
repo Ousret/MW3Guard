@@ -181,7 +181,7 @@ namespace MW3Guard_PS3
             /*
             party_minplayers 1 [OK]
             lobby_partySearchWaitTime 0
-            party_gameStartTimerLength 1 [OK]
+            party_gameStartTimerLength 16 [OK]
             party_pregameStartTimerLength 12
             party_vetoDelayTime 1
             party_maxTeamDiff 16 [OK]
@@ -189,21 +189,21 @@ namespace MW3Guard_PS3
             pt_backoutOnClientPresence 1
             partymigrate_timeout 1
             pt_pregameStartTimerLength 1
-            pt_gameStartTimerLength 20 
+            pt_gameStartTimerLength 16
             */
             if (MW3_REMOTE.cl_ingame()) return false;
 
             MW3_REMOTE.lockIntDvarToValue(0x8AEE34, 0x1); //party_minplayers
-            MW3_REMOTE.lockIntDvarToValue(0x8AEDC0, 0x1); //pt_gameStartTimerLength
+            MW3_REMOTE.lockIntDvarToValue(0x8AEDC0, 0xF); //pt_gameStartTimerLength
             MW3_REMOTE.lockIntDvarToValue(0x8AEDC8, 0x1); //pt_pregameStartTimerLength
             MW3_REMOTE.lockIntDvarToValue(0x8AEED8, 0x1); //partymigrate_timeout
             MW3_REMOTE.lockIntDvarToValue(0x8AEE88, 0xF); //party_maxTeamDiff
 
-            PS3_REMOTE.Extension.WriteUInt32(0x428a40, 0x4081001c);
+            /*PS3_REMOTE.Extension.WriteUInt32(0x428a40, 0x4081001c);
             PS3_REMOTE.Extension.WriteUInt32(0x428a44, 0x48000018);
             PS3_REMOTE.Extension.WriteUInt32(0x428a4c, 0x40810010);
             PS3_REMOTE.Extension.WriteUInt32(0x428a54, 0x40810008);
-            PS3_REMOTE.Extension.WriteUInt32(0x428a58, 0x48000005);
+            PS3_REMOTE.Extension.WriteUInt32(0x428a58, 0x48000005);*/
 
             return true;
         }
@@ -808,8 +808,8 @@ namespace MW3Guard_PS3
                                     c_board[i].nbsec_camp = 0;
 
                                     /* Save loc */
-                                    saveClientOrigin(i);
-                                    
+                                    if (c_board[i].kills >= 1 && GetClientHealth(i) != 0) saveClientOrigin(i);
+
                                 }
                                 
                                 /* multi-language warning (EN; FR; ES; GE) */
