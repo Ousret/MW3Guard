@@ -855,7 +855,7 @@ namespace MW3Guard_PS3
                                 }
                                 
                                 /* Obvious cases of cheating */
-                                if (clienthavegodmodeclass(i))
+                                if (clienthavegodmodeclass(i) && c_board[i].kills >= 1)
                                 {
                                     MW3_REMOTE.SV_KickClient(i, "has been ^1kicked ^0for ^2cheating. ^7(Reason 1)");
                                     SetHostWarning(c_board[i].client_name + ": kick for god mode class");
@@ -945,7 +945,6 @@ namespace MW3Guard_PS3
                                         SetHostWarning(c_board[i].client_name + ": high chance of illegal UAV or RedBox");
                                         _debug.WriteLine("[" + DateTime.Now.ToString("MM-dd-yyyy-h-mm") + "] " + c_board[i].client_name + " should have illegal UAV or RedBox (No-kick)");
                                     }
-                                    
                                     
                                 }
                                 else if (__voteKick == i)
@@ -1291,6 +1290,7 @@ namespace MW3Guard_PS3
         private bool isGameFinished()
         {
             if (getTeamScore(0) == 0 && getTeamScore(1) == 0) return false;
+            
             int i = 0, j = 0, nbMatch = 0, nbTests = 0;
             
             if (getCurrentGameMode() == "Team Deathmatch")
