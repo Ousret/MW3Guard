@@ -1,4 +1,4 @@
-﻿MW3Guard 1.4.1 (Release)
+﻿MW3Guard 1.4.2 (Release)
 ========================
 
 This program should help PlayStation(r) 3 users to extend their experience with Modern Warfare(r) 3 from Activision.
@@ -14,13 +14,25 @@ This project was a opportunity for me to learn about C# and of course to play wi
 Author(s): 
 - TAHRI Ahmed @Ousret
 
-What new in 1.4.1 ?
+Changelog for 1.4.2
+===============
+- Spankill protection improved.
+- Force host option is now more reliable.
+- Fix bug when trying to re-enable guarder process (Loading form obj now local)
+- Fix bug when you're not the host (vsh notify spam issue)
+- Fix crash when trying to kick for illegal class before initial countdown
+- Change kick priority (Invisible class before god class)
+
+Changelog for 1.4.1
+================
 - First public release
 - Stable!
 - Compatible with lastest patch 1.24 (Out for year now..)
 
-sha256 checksum
+sha256 checksum :
 48f22e68ad809a52b1cf15135c8514508d977849f50797937ffc8e9f87d6972d *MW3Guard1.4.1.zip
+
+9fe2040da0c5ebcb090a6e55b2ddb35579710803a10da12216e9f272ad736262 *MW3Guard1.4.2.zip
 
 ### MW3Guard
 You shall not download binarie from unknow source. Check lastest md5 checksum from this page.
