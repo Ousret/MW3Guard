@@ -156,7 +156,7 @@ namespace MW3Guard_PS3
             }
             else if (prestige > 0)
             {
-                return "levels\\p" + MW3_BOT.c_board[i].n_prestige + ".png";
+                return "levels\\p" + prestige + ".png";
             }
             else
             {
