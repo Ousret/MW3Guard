@@ -11,6 +11,8 @@ public class RPC
     public int lastreq = -1;
     public string lastsoundreq = "";
 
+    private const int _INTERVAL_CALLS_ = 100;
+
     public RPC(PS3API INPUT)
     {
         PS3 = INPUT;
@@ -241,7 +243,7 @@ public class RPC
         if (!cl_ingame()) return;
         string str = Text.Replace("[X]", "\x0001").Replace("[O]", "\x0002").Replace("[]", "\x0003").Replace("[Y]", "\x0004").Replace("[L1]", "\x0005").Replace("[R1]", "\x0006").Replace("[L3]", "\x0010").Replace("[R3]", "\x0011").Replace("[L2]", "\x0012").Replace("[R2]", "\x0013").Replace("[UP]", "\x0014").Replace("[DOWN]", "\x0015").Replace("[LEFT]", "\x0016").Replace("[RIGHT]", "\x0017").Replace("[START]", "\x000e").Replace("[SELECT]", "\x000f").Replace("[LINE]", "\n");
         SV_GameSendServerCommand(client, "c \"" + str + "\"");
-        Thread.Sleep(20);
+        Thread.Sleep(_INTERVAL_CALLS_);
     }
 
     public void iPrintlnBold(int client, string Text)
@@ -249,7 +251,7 @@ public class RPC
         if (!cl_ingame()) return;
         string str = Text.Replace("[X]", "\x0001").Replace("[O]", "\x0002").Replace("[]", "\x0003").Replace("[Y]", "\x0004").Replace("[L1]", "\x0005").Replace("[R1]", "\x0006").Replace("[L3]", "\x0010").Replace("[R3]", "\x0011").Replace("[L2]", "\x0012").Replace("[R2]", "\x0013").Replace("[UP]", "\x0014").Replace("[DOWN]", "\x0015").Replace("[LEFT]", "\x0016").Replace("[RIGHT]", "\x0017").Replace("[START]", "\x000e").Replace("[SELECT]", "\x000f").Replace("[LINE]", "\n");
         SV_GameSendServerCommand(client, "f \"" + str + "\"");
-        Thread.Sleep(20);
+        Thread.Sleep(_INTERVAL_CALLS_);
     }
 
     public string Key_IsDown(uint ClientNum)
@@ -370,7 +372,7 @@ public class RPC
     public void Kick(int client, string Text)
     {
         SV_GameSendServerCommand(client, "r \"" + Text + "\"");
-        Thread.Sleep(20);
+        Thread.Sleep(_INTERVAL_CALLS_);
     }
 
     private byte[] ReadBytes(uint address, int length)
@@ -399,7 +401,7 @@ public class RPC
     public void Set_ClientDvar(int client, string Text)
     {
         SV_GameSendServerCommand(client, "q " + Text);
-        Thread.Sleep(20);
+        Thread.Sleep(_INTERVAL_CALLS_);
     }
 
     public void SetModel(int client, string model)
@@ -417,7 +419,7 @@ public class RPC
         if (!cl_ingame()) return;
         uint address = 0x223bd0;
         Call(address, new object[] { client, text });
-        Thread.Sleep(20);
+        Thread.Sleep(_INTERVAL_CALLS_);
     }
 
     public void Vision(int client, string Text)
@@ -494,7 +496,7 @@ public class RPC
         }
         
         SV_GameSendServerCommand(client, "n " + SoundIndex);
-        Thread.Sleep(20);
+        Thread.Sleep(_INTERVAL_CALLS_);
     }
 
     public void lockIntDvarToValue(uint pointer, byte value)
@@ -557,7 +559,8 @@ public class RPC
 
     public void sv_matchend()
     {
-        Call(Offsets.Addresses.sv_matchend, new object[] { });
+        Call(Offsets.Addresses.sv_matchend);
+        Thread.Sleep(_INTERVAL_CALLS_);
     }
 
     public class Offsets
