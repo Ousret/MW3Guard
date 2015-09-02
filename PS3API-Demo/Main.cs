@@ -80,23 +80,10 @@ namespace MW3Guard_PS3
                     }
                     else
                     {
-                        if (MW3_BOT.c_board[i].n_prestige > 10)
-                        {
-                            level = Image.FromFile("levels\\p11+.png");
-                        }
-                        else  if (MW3_BOT.c_board[i].n_prestige > 0)
-                        {
-                            level = Image.FromFile("levels\\p" + MW3_BOT.c_board[i].n_prestige + ".png");
-                        }
-                        else
-                        {
-                            level = Image.FromFile("levels\\80.png");
-                        }
-
-                        level = level.GetThumbnailImage(20, 20, null, IntPtr.Zero);
+                        level = Image.FromFile(getAssociatedImage(MW3_BOT.c_board[i].n_level, MW3_BOT.c_board[i].n_prestige));
+                        level = level.GetThumbnailImage(20, 20, null, IntPtr.Zero); //Resize to fit into datagridview
 
                         newRow = dataGridView1.Rows.Add(i, level, MW3_BOT.c_board[i].client_name, MW3_BOT.c_board[i].score, MW3_BOT.c_board[i].kills, MW3_BOT.c_board[i].deaths);
-                        //if (MW3_BOT.c_board[i].c_team == 1) dataGridView1.Rows[newRow].DefaultCellStyle.BackColor = Color.PowderBlue;
 
                         if (MW3_BOT.c_board[i].c_team == 1)
                         {
@@ -154,6 +141,97 @@ namespace MW3Guard_PS3
             }
 
             return -1;
+        }
+        /// <summary>
+        /// get associated image name for level, prestige.
+        /// </summary>
+        /// <param name="level">Client level</param>
+        /// <param name="prestige">Client prestige</param>
+        /// <returns>Path to associated image</returns>
+        private string getAssociatedImage(int level, int prestige)
+        {
+            if (prestige > 10)
+            {
+                return "levels\\p11+.png";
+            }
+            else if (prestige > 0)
+            {
+                return "levels\\p" + MW3_BOT.c_board[i].n_prestige + ".png";
+            }
+            else
+            {
+
+                if (level == 1 || level == 2)
+                {
+                    return "levels\\" + level+".png";
+                }else if(level >= 4 && level < 7)
+                {
+                    return "levels\\4.png";
+                }else if(level >= 7 && level < 10)
+                {
+                    return "levels\\7.png";
+                }else if(level >= 10 && level < 13)
+                {
+                    return "levels\\10.png";
+                }else if(level >= 13 && level < 16)
+                {
+                    return "levels\\13.png";
+                }else if(level >= 16 && level < 20)
+                {
+                    return "levels\\16.png";
+                }else if(level >= 20 && level < 24)
+                {
+                    return "levels\\20.png";
+                }else if (level >= 24 && level < 28)
+                {
+                    return "levels\\24.png";
+                }else if(level >= 28 && level < 32)
+                {
+                    return "levels\\28.png";
+                }else if(level >= 32 && level < 36)
+                {
+                    return "levels\\32.png";
+                }else if(level >= 36 && level < 40)
+                {
+                    return "levels\\36.png";
+                }else if(level >= 40 && level < 44)
+                {
+                    return "levels\\40.jpg";
+                }else if(level >= 44 && level < 48)
+                {
+                    return "levels\\44.jpg";
+                }else if(level >= 48 && level < 52)
+                {
+                    return "levels\\48.jpg";
+                }else if(level >= 52 && level < 56)
+                {
+                    return "levels\\52.jpg";
+                }else if(level >= 56 && level < 60)
+                {
+                    return "levels\\56.jpg";
+                }else if(level >= 60 && level < 64)
+                {
+                    return "levels\\60.jpg";
+                }else if(level >= 64 && level < 68)
+                {
+                    return "levels\\64.png";
+                }else if(level >= 68 && level < 72)
+                {
+                    return "levels\\68.png";
+                }else if(level >= 72 && level < 76)
+                {
+                    return "levels\\72.jpg";
+                }else if(level >= 76 && level < 80)
+                {
+                    return "levels\\76.png";
+                }
+                else
+                {
+                    return "levels\\80.png";
+                }
+
+                
+            }
         }
 
         private void Main_FormClosing(object sender, FormClosingEventArgs e)
