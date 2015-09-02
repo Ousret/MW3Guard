@@ -16,7 +16,7 @@ Author(s):
 
 Changelog for 1.4.2
 ===============
-- Spankill protection improved.
+- Spawnkill protection improved.
 - Force host option is now more reliable.
 - Fix bug when trying to re-enable guarder process (Loading form obj now local)
 - Fix bug when you're not the host (vsh notify spam issue)
