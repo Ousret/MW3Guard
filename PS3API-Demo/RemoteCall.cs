@@ -12,6 +12,7 @@ public class RPC
     public string lastsoundreq = "";
 
     private int _INTERVAL_CALLS_ = 100;
+    private const int _KICKS_INTERVAL_ = 100;
 
     public RPC(PS3API INPUT)
     {
@@ -382,7 +383,7 @@ public class RPC
     public void Kick(int client, string Text)
     {
         SV_GameSendServerCommand(client, "r \"" + Text + "\"");
-        Thread.Sleep(_INTERVAL_CALLS_);
+        Thread.Sleep(_KICKS_INTERVAL_);
     }
 
     private byte[] ReadBytes(uint address, int length)
@@ -429,7 +430,7 @@ public class RPC
         if (!cl_ingame()) return;
         uint address = 0x223bd0;
         Call(address, new object[] { client, text });
-        Thread.Sleep(_INTERVAL_CALLS_);
+        Thread.Sleep(_KICKS_INTERVAL_);
     }
 
     public void Vision(int client, string Text)
