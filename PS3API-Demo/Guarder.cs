@@ -79,7 +79,7 @@ namespace MW3Guard_PS3
             public int lastKillStreak = 0, currentKillStreak = 0;
 
             /* Vote to kick (web to ps3) */
-            public string client_ip = ""; //0x01BBFE3C
+            public string token_vote = "";
             public int nbVoteKick = 0;
 
             /* Test for Wallhack (only once to avoid useless charge) */
@@ -87,6 +87,7 @@ namespace MW3Guard_PS3
 
             /* NbIter per client */
             public uint cl_inter = 0;
+            public float averageSpeed = 0;
 
             /* Origin client, save x10 (for spawnkill protection) */
             public float[] s_originX = new float[_MAX_SAVE_ORIGIN], s_originY = new float[_MAX_SAVE_ORIGIN], s_originZ = new float[_MAX_SAVE_ORIGIN];
@@ -151,8 +152,9 @@ namespace MW3Guard_PS3
             }
         }
 
-        System.IO.StreamWriter _debug;
-        Stopwatch _bench = new Stopwatch();
+        private System.IO.StreamWriter _debug;
+        private Stopwatch _bench = new Stopwatch();
+        public volatile float ElapsedSecLoop = 0;
 
         /* Sound IO: CustomAnnounce */
         private SoundPlayer announceSound;
@@ -593,6 +595,19 @@ namespace MW3Guard_PS3
             enable_quakelike_announce = handle_db.getParamsBool("quakelike_announce");
             display_warnings = handle_db.getParamsBool("display_warnings");
 
+            /* Select most accurate delay between each rpc calls for current params. */
+            if (!display_warnings && !enable_quakelike_announce)
+            {
+                MW3_REMOTE.setMinCallsInterval(100);
+            }else if(!enable_quakelike_announce)
+            {
+                MW3_REMOTE.setMinCallsInterval(50);
+            }
+            else
+            {
+                MW3_REMOTE.setMinCallsInterval(35);
+            }
+
             enable_uav_redbox_analysis = handle_db.getParamsBool("ratio_re_analysis");
 
             camping_rule_choise = handle_db.getParamsInt("camp_rule_id");
@@ -666,6 +681,9 @@ namespace MW3Guard_PS3
                 {
                     nbClient_T = 0;
 
+                    /* Measure for elapsed time begin */
+                    _bench.Start();
+
                     /* Mettre à jour la liste des joueurs */
                     for (i = 0; i < maxSlots; i++)
                     {
@@ -717,6 +735,9 @@ namespace MW3Guard_PS3
                             killstmp = GetClientKills(i);
                             deathstmp = GetClientDeaths(i);
 
+                            //Get client average speed
+                            if(GetClientHealth(i) > 0) c_board[i].averageSpeed = getAverageClientSpeed(i, ElapsedSecLoop + (float)_bench.Elapsed.TotalSeconds);
+                            
                             //Upd8 origin x,y,z
                             c_board[i].xp = getClientCoordinateX(i);
                             c_board[i].yp = getClientCoordinateY(i);
@@ -1064,6 +1085,10 @@ namespace MW3Guard_PS3
 
                     }
 
+                    _bench.Stop();
+                    ElapsedSecLoop = (float)_bench.Elapsed.TotalSeconds;
+                    _bench.Reset();
+
                     //We may went to disable patch on sv_matchend on team abord.
                     if (!disable_sm_me && disable_sv_matchend && ((NbClientTeam(0) == 0 || NbClientTeam(1) == 0) || (nbClient == 1 && nbClient_T == 1)))
                     {
@@ -1114,6 +1139,16 @@ namespace MW3Guard_PS3
             }
 
             _debug.Close();
+        }
+
+        private float getAverageClientSpeed(int pID, float elapsed)
+        {
+            //v=d/t
+            if (c_board[pID] == null) return 0;
+            float currentX = getClientCoordinateX(pID), currentY = getClientCoordinateY(pID), currentZ = getClientCoordinateZ(pID);
+            double distance = distancePoints(c_board[pID].xp, c_board[pID].yp, c_board[pID].zp, currentX, currentY, currentZ);
+
+            return ((float)distance / elapsed);
         }
 
         /// <summary>

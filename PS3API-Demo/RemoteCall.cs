@@ -11,7 +11,7 @@ public class RPC
     public int lastreq = -1;
     public string lastsoundreq = "";
 
-    private const int _INTERVAL_CALLS_ = 100;
+    private int _INTERVAL_CALLS_ = 100;
 
     public RPC(PS3API INPUT)
     {
@@ -89,6 +89,16 @@ public class RPC
         PS3.Extension.WriteUInt32(0x10050048, address);
         Thread.Sleep(20);
         return PS3.Extension.ReadInt32(0x1005004c);
+    }
+
+    /// <summary>
+    /// Set minimal delay between each RPC calls.
+    /// </summary>
+    /// <param name="delay">Delay in ms</param>
+    public void setMinCallsInterval(int delay)
+    {
+        if (delay < 10) return;
+        _INTERVAL_CALLS_ = delay;
     }
 
     /// <summary>
